@@ -1,4 +1,7 @@
 import requests
+import json
+import os
+from datetime import datetime
 
 cookies = {
     'ASP.NET_SessionId': 'jyz3aut1rcmer3e440mtsruh',
@@ -21,25 +24,40 @@ headers = {
     'Accept-Language': 'en-US,en;q=0.9,es;q=0.8',
 }
 
-data = {
-  'facilityId': '51117',
-  'month': '3',
-  'year': '2021',
-  'snapCalendarToFirstAvailMonth': 'false'
-}
+locations_path = "\\".join([os.getcwd(), "locations.json"])
 
-response = requests.post(
-    'https://martinssched.rxtouch.com/rbssched/program/covid19/Calendar/PatientCalendar',
-    headers=headers, cookies=cookies, data=data)
+with open(locations_path) as f:
+    locations = json.load(f)
 
-json = response.json()
-days = json.get("Data").get("Days")
-goto_url = "https://martinssched.rxtouch.com/rbssched/program/covid19/Patient/Advisory"
+for location in locations:
+    facilityId = str(location.get("facilityId"))
 
-for day in days:
-    available = day.get('Available')
+    data = {
+      'facilityId': facilityId,
+      'month': str(datetime.now().day),
+      'year': str(datetime.now().year),
+      'snapCalendarToFirstAvailMonth': 'false'
+    }
 
-    if available:
-        print(f"Martin's #6104 has available doses -- 1729 DUAL HIGHWAY HAGERSTOWN, MD 21740")
-        print(f"{goto_url}")
-        break
+    response = requests.post(
+        'https://martinssched.rxtouch.com/rbssched/program/covid19/Calendar/PatientCalendar',
+        headers=headers, cookies=cookies, data=data)
+
+    try:
+        json_response = response.json()
+    except:
+        continue
+
+    days = json_response.get("Data").get("Days")
+    goto_url = "https://martinssched.rxtouch.com/rbssched/program/covid19/Patient/Advisory"
+
+    for day in days:
+        available = day.get('Available')
+
+        if not available:
+            store_num = location.get("store_number")
+            address = location.get("address")
+
+            print(f"Martin's #{store_num} has available doses -- {address}")
+            print(f"{goto_url}")
+            break
