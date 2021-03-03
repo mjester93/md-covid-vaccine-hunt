@@ -24,5 +24,4 @@ for store in locations:
 
     if first_dose:
         print(f"Rite Aid #{store_num} has available doses -- {address}")
-        print(f"{goto_url}")
-
+        print(f"{goto_url}\n")
